@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>失智症實務教學｜課堂情境抽題互動控制台</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --primary: #0284c7;
+      --primary-light: #38bdf8;
+      --primary-dark: #0369a1;
+      --accent: #f59e0b;
+      --accent-light: #fbbf24;
+      --comm-color: #06b6d4;
+      --care-color: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "微軟正黑體", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* 頂部導航列 */
+    header {
+      background: #090d16;
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, var(--primary), var(--care-color));
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      color: #fff;
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* 按鈕樣式 */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-accent { background: var(--accent); color: #000; font-weight: 700; }
+    .btn-outline { background: transparent; border-color: var(--card-border); color: var(--text-main); }
+    .btn-outline:hover { background: var(--card-bg); border-color: var(--text-muted); }
+    .btn-success { background: #166534; color: #bbf7d0; border-color: #22c55e; }
+    .btn-danger { background: #991b1b; color: #fecaca; }
+
+    /* 影片配對檢核指示燈 */
+    .status-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .dot.partial { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .dot.none { background: var(--danger); }
+
+    /* 主架構佈局 */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 左側面板：組別與課堂控制 */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 10px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 組別管理器 */
+    .group-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .group-card {
+      background: #0f172a;
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .group-card:hover {
+      border-color: var(--primary-light);
+    }
+
+    .group-card.active {
+      border-color: var(--accent);
+      background: #1e1b4b;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+    }
+
+    .group-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .group-card.active .group-card-header {
+      color: var(--accent-light);
+    }
+
+    .group-drawn-count {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--card-border);
+      color: var(--text-muted);
+    }
+
+    .group-topics-list {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .drawn-topic-pill {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .drawn-topic-pill.comm { border-left: 3px solid var(--comm-color); }
+    .drawn-topic-pill.care { border-left: 3px solid var(--care-color); }
+
+    /* 中央操作舞台 */
+    .stage-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* 課堂狀態指示橫幅 */
+    .stage-banner {
+      background: linear-gradient(90deg, #1e293b, #0f172a);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .current-group-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .current-group-tag {
+      background: var(--accent);
+      color: #000;
+      font-weight: 900;
+      font-size: 18px;
+      padding: 6px 16px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .current-action-text {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    /* 題庫分類篩選器 */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      background: #0f172a;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* 核心抽籤展示區 */
+    .draw-stage {
+      background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+      border: 2px solid var(--card-border);
+      border-radius: 16px;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 380px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+    }
+
+    /* 動態輪播卡片滾輪效果 */
+    .draw-roulette-box {
+      width: 100%;
+      max-width: 680px;
+      height: 180px;
+      background: #0f172a;
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 0 30px rgba(2, 132, 199, 0.2);
+      overflow: hidden;
+      margin-bottom: 30px;
+    }
+
+    .roulette-track {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.1s linear;
+      width: 100%;
+      text-align: center;
+    }
+
+    .roulette-item {
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      width: 100%;
+    }
+
+    .roulette-item-category {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .roulette-item-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.4;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    /* 抽籤主要觸發按鈕 */
+    .draw-action-wrapper {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .btn-draw {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 800;
+      padding: 16px 48px;
+      border-radius: 50px;
+      border: 3px solid rgba(255,255,255,0.2);
+      box-shadow: 0 0 25px rgba(37, 99, 235, 0.5), inset 0 0 15px rgba(255,255,255,0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-draw:hover:not(:disabled) {
+      transform: scale(1.06);
+      box-shadow: 0 0 35px rgba(37, 99, 235, 0.8);
+      filter: brightness(1.1);
+    }
+
+    .btn-draw:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .btn-draw:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+    }
+
+    /* 題庫一覽與即時狀態網格 */
+    .matrix-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .matrix-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .matrix-card {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .matrix-card.drawn {
+      opacity: 0.45;
+      border-color: #334155;
+      background: #090d16;
+    }
+
+    .matrix-card.drawn::after {
+      content: "已抽取";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .matrix-card-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .matrix-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+
+    .matrix-card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    /* 抽中後彈出全螢幕討論視窗 (Modal) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #1e293b;
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 1100px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* OSD 安全標籤列（防止播錯影片盲點） */
+    .osd-bar {
+      background: #0f172a;
+      border-bottom: 2px solid var(--accent);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .osd-verify-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .osd-tag {
+      background: var(--accent);
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      background: #1e293b;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-topic-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      flex: 1;
+    }
+
+    @media (max-width: 900px) {
+      .modal-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 播放器容器 */
+    .video-container {
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      border: 1px solid var(--card-border);
+      position: relative;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      outline: none;
+    }
+
+    .video-fallback-notice {
+      padding: 30px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    /* 教學與討論引導卡 */
+    .discussion-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .timer-widget {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .timer-display {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--accent-light);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .guide-section {
+      background: #0f172a;
+      border-left: 4px solid var(--primary);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .guide-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-light);
+      margin-bottom: 6px;
+    }
+
+    .guide-content {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .discussion-questions-box {
+      background: #111827;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .discussion-questions-box h4 {
+      color: var(--accent);
+      font-size: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .discussion-questions-box ol {
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+
+    .modal-footer {
+      padding: 14px 24px;
+      background: #0f172a;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 抽屜選單：課前檢核與設定 */
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -500px;
+      width: 480px;
+      max-width: 90vw;
+      height: 100vh;
+      background: #1e293b;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+      z-index: 90;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--card-border);
+    }
+
+    .drawer.active {
+      right: 0;
+    }
+
+    .drawer-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drawer-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .manifest-table-wrapper {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+    }
+
+    .manifest-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .manifest-table th, .manifest-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--card-border);
+      text-align: left;
+    }
+
+    .manifest-table th {
+      background: #0f172a;
+      color: var(--text-muted);
+      position: sticky;
+      top: 0;
+    }
+
+    /* 快捷設定標籤 */
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .select-input, .text-input {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .select-input:focus, .text-input:focus {
+      border-color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部功能列 -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">護</div>
+      <div>
+        <div class="brand-title">失智症長照情境教學｜課堂抽題互動控制台</div>
+        <div class="brand-subtitle">長佳長照實務培訓專用・24 部情境影片對照庫</div>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- 題庫狀態指示 -->
+      <div class="status-badge" id="btnOpenCheckDrawer" title="點擊查看 24 題檔案清單與教案">
+        <span class="dot connected" id="statusDot"></span>
+        <span id="statusText">24 部情境影片題庫（支援自由選題 / 隨機抽籤）</span>
+      </div>
+
+      <!-- 全螢幕切換 -->
+      <button class="btn btn-outline" id="btnToggleFullscreen" title="快捷鍵 F">
+        ⛶ 全螢幕
+      </button>
+
+      <!-- 課堂設定 -->
+      <button class="btn btn-outline" id="btnOpenSettingsDrawer">
+        ⚙ 課堂設定
+      </button>
+
+      <!-- 匯出紀錄 -->
+      <button class="btn btn-outline" id="btnExportRecord">
+        📥 匯出紀錄
+      </button>
+
+      <!-- 重置課堂 -->
+      <button class="btn btn-danger" id="btnResetClass" style="padding: 6px 12px; font-size: 12px;">
+        開新課堂
+      </button>
+    </div>
+  </header>
+
+  <!-- 主工作台 -->
+  <main>
+    <!-- 左側小組控制欄 -->
+    <aside class="sidebar">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">👥 研討小組管理</div>
+          <button class="btn btn-outline" id="btnQuickAddGroup" style="padding: 2px 8px; font-size: 11px;">+ 新增組別</button>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+          點選組別即可指派為「當前抽籤小組」：
+        </div>
+        <div class="group-selector-grid" id="groupGrid">
+          <!-- 動態生成組別卡片 -->
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom: 10px;">📋 課堂抽籤統計</div>
+        <div style="font-size: 13px; line-height: 1.8; color: var(--text-muted);">
+          <div>目前課堂組數：<strong id="statTotalGroups" style="color:#fff;">6</strong> 組</div>
+          <div>已抽題目總數：<strong id="statDrawnCount" style="color:var(--accent);">0</strong> / 24 題</div>
+          <div>溝通模組進度：<span id="statCommCount" style="color:var(--comm-color);">0</span> / 12</div>
+          <div>照顧模組進度：<span id="statCareCount" style="color:var(--care-color);">0</span> / 12</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右側中央舞台 -->
+    <section class="stage-container">
+      <!-- 當前狀態指示 -->
+      <div class="stage-banner">
+        <div class="current-group-badge">
+          <span class="current-group-tag" id="currentGroupTag">第 1 組</span>
+          <span class="current-action-text" id="currentActionNotice">請就位準備抽取失智症教學情境題目</span>
+        </div>
+
+        <!-- 題庫模組篩選 -->
+        <div class="filter-tabs">
+          <button class="filter-btn active" data-filter="all">全部 (24題)</button>
+          <button class="filter-btn" data-filter="comm">僅溝通模組 (12題)</button>
+          <button class="filter-btn" data-filter="care">僅照顧模組 (12題)</button>
+        </div>
+      </div>
+
+      <!-- 核心抽獎展示台 -->
+      <div class="draw-stage">
+        <!-- 滾輪輪播動畫盒 -->
+        <div class="draw-roulette-box">
+          <div class="roulette-track" id="rouletteTrack">
+            <div class="roulette-item">
+              <span class="roulette-item-category" style="background: rgba(2, 132, 199, 0.2); color: var(--primary-light);">情境教學題庫準備就緒</span>
+              <span class="roulette-item-title">按下按鈕開始抽題</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 觸發按鈕區 -->
+        <div class="draw-action-wrapper">
+          <button class="btn-draw" id="btnStartDraw">
+            🎲 開始抽題
+          </button>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
+            <input type="checkbox" id="chkQuickMode"> 快速模式 (跳過滾輪動畫)
+          </label>
+        </div>
+      </div>
+
+      <!-- 題庫狀態矩陣清單 -->
+      <div class="matrix-panel">
+        <div class="panel-header">
+          <div class="panel-title">📚 24 部情境影片題庫即時狀態</div>
+          <div class="matrix-stats">
+            <span>剩餘可抽：<strong id="matrixAvailableCount" style="color:var(--primary-light);">24</strong> 題</span>
+          </div>
+        </div>
+        <div class="matrix-grid" id="matrixGrid">
+          <!-- 動態載入 24 題狀態矩陣 -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 抽中彈出視窗（影片播放與討論引導控制台） -->
+  <div class="modal-overlay" id="topicModal">
+    <div class="modal-box">
+      <!-- OSD 檔案名稱對照列 -->
+      <div class="osd-bar">
+        <div class="osd-verify-info">
+          <span class="osd-tag">影片檔案名稱</span>
+          <span id="modalTopicBadge" style="color:var(--primary-light);">溝通題目 1</span>
+          <code style="color: #fff; background:#1e293b; padding: 3px 8px; border-radius: 4px; font-size: 13px;" id="modalExpectedFile">檔案名稱載入中...</code>
+          <button class="btn btn-outline" id="btnCopyOnlyFileName" style="padding:2px 8px; font-size:11px;">複製檔名</button>
+        </div>
+        <div id="modalAssignedGroupTag" style="font-weight: 700; color: var(--accent);">指派小組：第 1 組</div>
+      </div>
+
+      <div class="modal-header">
+        <div class="modal-topic-title" id="modalTopicTitle">題目名稱載入中...</div>
+        <button class="btn btn-outline" id="btnCloseModal" style="padding: 4px 10px;">✕ 關閉視窗 (Esc)</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 左側：影片播放器 -->
+        <div class="video-container" id="videoDropZone">
+          <video id="mainVideoPlayer" controls preload="metadata">
+            您的瀏覽器不支援影片標籤。
+          </video>
+          <!-- 自由選取 / 備援介面 -->
+          <div class="video-fallback-notice" id="videoFallbackBox" style="display: none;">
+            <div style="font-size: 40px;">🎬</div>
+            <div style="font-size: 16px; font-weight: 700; color: #f8fafc;" id="fallbackFilePrompt">對應影片檔案名稱</div>
+            <code id="codeFileNameDisplay" style="background:#0f172a; border: 1px solid var(--card-border); color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 13px; max-width: 90%; word-break: break-all;"></code>
+            
+            <div style="display: flex; gap: 10px; margin-top: 6px;">
+              <button class="btn btn-primary" id="btnSelectSingleVideo">📂 自由選取本機影片播放</button>
+            </div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+              (支援直接拖曳影片至此處播放，或直接以右側教案進行小組研討)
+            </div>
+            <input type="file" id="singleFileInput" accept="video/mp4,video/*" style="display: none;">
+          </div>
+        </div>
+
+        <!-- 右側：教學討論與計時引導 -->
+        <div class="discussion-card">
+          <!-- 小組研討計時器 -->
+          <div class="timer-widget">
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">小組研討倒數</div>
+              <div class="timer-display" id="timerText">03:00</div>
+            </div>
+            <div class="timer-controls">
+              <button class="btn btn-accent" id="btnTimerToggle">開始計時</button>
+              <button class="btn btn-outline" id="btnTimerAdd1">+1 分鐘</button>
+              <button class="btn btn-outline" id="btnTimerReset">重設</button>
+            </div>
+          </div>
+
+          <!-- 個案情境與心理背景 -->
+          <div class="guide-section">
+            <div class="guide-title">🧠 失智長輩心理與情境核心解析</div>
+            <div class="guide-content" id="modalCaseBackground">
+              長輩重複提問並非故意找麻煩，而是因短期記憶受損造成時間定向障礙，引發強烈的內在不安全感。
+            </div>
+          </div>
+
+          <!-- 研討問題引導 -->
+          <div class="discussion-questions-box">
+            <h4>💡 小組研討反思任務</h4>
+            <ol id="modalDiscussionQuestions">
+              <li>影片中照顧者的回應為何加劇了長輩的焦慮？</li>
+              <li>如果換作是你，第一時間會如何同理長輩的情緒？</li>
+              <li>在機構作息中，有何環境或活動輔助策略可減輕此狀況？</li>
+            </ol>
+          </div>
+
+          <!-- 講師帶領小抄 -->
+          <div class="guide-section" style="border-left-color: var(--accent);">
+            <div class="guide-title" style="color: var(--accent);">🎯 講師引導與講評重點 (SOP 提示)</div>
+            <div class="guide-content" id="modalFacilitatorTips">
+              引導學員從「事實爭辯」轉向「情緒接納」。長照核心在於安撫心靈，避免直接糾正長輩的時間與邏輯。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div style="font-size: 12px; color: var(--text-muted);">
+          快捷鍵提示：[Space] 播放/暫停影片 ｜ [Esc] 關閉返回抽籤台
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline" id="btnReDrawCurrent">↺ 復原放回並重抽</button>
+          <button class="btn btn-primary" id="btnConfirmAndNext">✓ 確認本題研討完畢，下一組</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 課前檢核抽屜 (Pre-flight Drawer) -->
+  <div class="drawer" id="checkDrawer">
+    <div class="drawer-header">
+      <div class="panel-title">🛡️ 課前影片配對與檢核儀表板</div>
+      <button class="btn btn-outline" id="btnCloseCheckDrawer" style="padding: 4px 8px;">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div style="font-size: 13px; line-height: 1.6; color: var(--text-muted);">
+        為避免上課時播錯影片或卡住，請在上課前載入影片存放資料夾：<br>
+        預設路徑：<code style="color: #fff; background:#0f172a; padding: 2px 4px; border-radius: 4px;">E:\行政\長佳\資料參考\91_影片素材\PPT上課用_失智症</code>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" id="btnSelectFolder" style="flex: 1;">
+          📂 選擇影片資料夾 (一鍵配對 24 支)
+        </button>
+        <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+      </div>
+
+      <div style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);">
+        <div style="font-weight: 700; margin-bottom: 6px;">檢核統計結果：</div>
+        <div style="font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
+          <div>✓ 精確匹配：<strong id="chkCountMatched" style="color: var(--success);">0</strong> / 24 部</div>
+          <div>△ 待確認或缺檔：<strong id="chkCountMissing" style="color: var(--danger);">24</strong> / 24 部</div>
+        </div>
+      </div>
+
+      <!-- 24 題嚴格清單 -->
+      <div class="manifest-table-wrapper">
+        <table class="manifest-table">
+          <thead>
+            <tr>
+              <th>題號</th>
+              <th>預期檔案名稱</th>
+              <th>配對狀態</th>
+              <th>試播</th>
+            </tr>
+          </thead>
+          <tbody id="manifestTableBody">
+            <!-- 動態填入 24 題檢核清單 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 課堂設定抽屜 (Settings Drawer) -->
+  <div class="drawer" id="settingsDrawer">
+    <div class="drawer-header">
+      <div class="panel-title">⚙ 課堂參數設定</div>
+      <button class="btn btn-outline" id="btnCloseSettingsDrawer" style="padding: 4px 8px;">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="setting-group">
+        <label class="setting-label">研討總組數：</label>
+        <select class="select-input" id="settingGroupCount">
+          <option value="2">2 組</option>
+          <option value="3">3 組</option>
+          <option value="4">4 組</option>
+          <option value="5">5 組</option>
+          <option value="6" selected>6 組 (推薦)</option>
+          <option value="8">8 組</option>
+          <option value="10">10 組</option>
+          <option value="12">12 組</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">每題預設研討計時：</label>
+        <select class="select-input" id="settingDefaultTimer">
+          <option value="120">2 分鐘</option>
+          <option value="180" selected>3 分鐘 (推薦)</option>
+          <option value="300">5 分鐘</option>
+          <option value="420">7 分鐘</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">音效開關：</label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+          <input type="checkbox" id="settingSoundEnabled" checked> 啟用抽獎開獎合成音效
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <label class="setting-label">防重複抽取模式：</label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+          <input type="checkbox" id="settingPreventDuplicate" checked disabled> 嚴格排除已抽取題目 (預設保護)
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 嚴格 24 題題庫與完整教案資料庫 (Manifest) -->
+  <script>
+    const TOPIC_MANIFEST = [
+      // 溝通模組 1~12
+      {
+        id: "comm-01",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 1",
+        title: "溝通題目1：重複提問＋時間錯亂＋焦慮升高",
+        expectedFile: "溝通題目1：重複提問＋時間錯亂＋焦慮升高.mp4",
+        caseBackground: "長輩短期記憶喪失，失去時間定向感。因不知道自己身在何處或何時，內在焦慮激增，因而反覆詢問相同的問題以尋求安心。",
+        discussionQuestions: [
+          "為什麼直接回答『我剛剛不是才告訴過你嗎』會使長輩更加不安？",
+          "如何辨識長輩重複提問背後的『核心情緒』而非表面文字？",
+          "有哪些肢體動作或環境物品可以提供長輩具體的安全感？"
+        ],
+        facilitatorTips: "強調同理心先於解答。照護人員應先接納其緊張，以溫和堅定的語調安撫，再引導至熟悉的活動。"
+      },
+      {
+        id: "comm-02",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 2",
+        title: "溝通題目2：錯認人物＋情感依附",
+        expectedFile: "溝通題目2：錯認人物＋情感依附.mp4",
+        caseBackground: "長輩因臉孔辨識障礙與記憶退回年輕時期，將眼前護理人員誤認為自己的配偶或母親，展現出強烈的情感依附與依賴。",
+        discussionQuestions: [
+          "若當場嚴厲糾正『我不是你太太，我是照服員』會引發長輩何種反應？",
+          "在不欺騙也不破壞專業界線的前提下，如何順著其情感需求給予回應？",
+          "小組如何設計一套『轉移注意力』且不讓長輩受挫的溝通話術？"
+        ],
+        facilitatorTips: "『借力使力』原則。接納長輩想念親人的渴望，肯定其情感，再巧妙將話題導回生活作息照顧。"
+      },
+      {
+        id: "comm-03",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 3",
+        title: "溝通題目3：否定情緒（溝通錯誤）",
+        expectedFile: "溝通題目3：否定情緒（溝通錯誤）.mp4",
+        caseBackground: "長輩表達害怕或難過時，工作人員習慣性以『這有什麼好哭的』或『你想太多了』否定長輩的真實主觀感受，引發對立。",
+        discussionQuestions: [
+          "日常照護中最常脫口而出的『否定情緒口頭禪』有哪些？",
+          "否定長輩的情緒對建立長期的照護信賴關係有何致命傷害？",
+          "練習將一句否定句轉化為三句『具體同理句』。"
+        ],
+        facilitatorTips: "失智症長輩認知功能雖退化，但情感接收能力反而特別敏銳。先同理、後處理，是化解防衛的關鍵。"
+      },
+      {
+        id: "comm-04",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 4",
+        title: "溝通題目4：一直說要回家＋安全感缺失",
+        expectedFile: "溝通題目4：一直說要回家＋安全感缺失.mp4",
+        caseBackground: "機構長輩在黃昏或特定時段打包行李堅持要『回家』，本質上並非指向某個物理地址，而是渴望回到『熟悉、有掌控感與安全感』的避風港。",
+        discussionQuestions: [
+          "長輩口中的『家』代表了什麼意涵？（例如：童年、老家、責任）",
+          "阻擋或反鎖大門通常會帶來什麼樣的行為升級風險？",
+          "如何運用『陪伴散步』與『探索老照片/家鄉記憶』引導長輩平復？"
+        ],
+        facilitatorTips: "黃昏症候群（Sundowning）的經典處置。重點是滿足歸屬感，切勿理性講述『你家早就賣掉了』。"
+      },
+      {
+        id: "comm-05",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 5",
+        title: "溝通題目5：情緒標籤化",
+        expectedFile: "溝通題目5：情緒標籤化.mp4",
+        caseBackground: "工作團隊將長輩的情緒反應一律標籤為『他就是盧、脾氣怪、不配合』，忽視了身體不適、疼痛、便秘或環境吵雜等潛在導火線。",
+        discussionQuestions: [
+          "將長輩行為『標籤化』會如何降低工作人員的照護敏感度？",
+          "當長輩情緒不穩時，應優先排查哪些生理與環境指標？",
+          "交班時應如何客觀描述長輩行為，避免帶有個人偏見字眼？"
+        ],
+        facilitatorTips: "行為是長輩未被滿足需求的溝通密碼。去標籤化才能看見疼痛、憋尿或過敏等生理徵兆。"
+      },
+      {
+        id: "comm-06",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 6",
+        title: "溝通題目6：情緒爆發＋環境過度刺激",
+        expectedFile: "溝通題目6：情緒爆發＋環境過度刺激.mp4",
+        caseBackground: "在大廳活動或電視聲過大、人流雜亂的環境下，長輩因資訊處理過載而引發感官超負荷，突然情緒失控甚至大聲咆哮。",
+        discussionQuestions: [
+          "如何評估長照環境中的『感官刺激度』（聲音、光線、氣味、人潮）？",
+          "情緒爆發的第一當下，首要安全原則與工作人員站位技巧是什麼？",
+          "降階環境刺激（De-escalation）的具體步驟有哪些？"
+        ],
+        facilitatorTips: "先降環境噪音與壓迫感，給予個人空間。工作人員切忌多人同時上前圍堵說話，以免長輩產生被圍攻恐慌。"
+      },
+      {
+        id: "comm-07",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 7",
+        title: "溝通題目7：不願意參加活動（社交退縮）",
+        expectedFile: "溝通題目7：不願意參加活動（社交退縮）.mp4",
+        caseBackground: "長輩因自覺能力衰退、害怕出醜或對陌生團體產生焦慮，長期拒絕走出房門參與團體活動，呈現孤立退縮狀態。",
+        discussionQuestions: [
+          "強迫或半哄半騙把長輩推到活動圈中央，會帶來何種反效果？",
+          "如何從長輩過去的職業或個人興趣，設計低門檻的『旁觀型參與』？",
+          "如何賦予長輩『小幫手』角色來提升其自我價值感？"
+        ],
+        facilitatorTips: "允許長輩從『旁觀者』開始適應。重視尊嚴維護，找出專屬亮點（例如請以前的裁縫師幫忙整理毛線）。"
+      },
+      {
+        id: "comm-08",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 8",
+        title: "溝通題目8：虛假的保證",
+        expectedFile: "溝通題目8：虛假的保證.mp4",
+        caseBackground: "照護者為了求快息事寧人，隨口說出『等一下你兒子就來接你』或『明天就出院』等無法兌現的承諾，隨後引發更大失落與信任崩潰。",
+        discussionQuestions: [
+          "為什麼『善意謊言』有時會在機構內演變成更大的照護災難？",
+          "當長輩發現承諾破滅時，會對所有護理與照服人員產生何種連鎖反應？",
+          "如何運用『轉化承諾』為具體可即刻實踐的陪伴行動？"
+        ],
+        facilitatorTips: "建立可持續的信任關係。用『我們現在一起泡茶等他』代替『他馬上來』，著眼於當下的陪伴。"
+      },
+      {
+        id: "comm-09",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 9",
+        title: "溝通題目9：改變話題",
+        expectedFile: "溝通題目9：改變話題.mp4",
+        caseBackground: "當長輩談論沉重話題或訴苦時，工作人員粗糙生硬地插話切換話題，讓長輩感到被忽視、敷衍與不被尊重。",
+        discussionQuestions: [
+          "『生硬打斷切話題』與『順應情緒巧妙轉移』的關鍵差異是什麼？",
+          "在轉換話題前，必須先滿足哪一個關鍵步驟？",
+          "演練一段順暢無痕的話題銜接示範。"
+        ],
+        facilitatorTips: "轉移話題的黃金公式：『充分傾聽 + 重複情緒關鍵字 + 順理成章過渡到新事物』。"
+      },
+      {
+        id: "comm-10",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 10",
+        title: "溝通題目10：過度同情（Sympathy過多）",
+        expectedFile: "溝通題目10：過度同情（Sympathy過多）.mp4",
+        caseBackground: "照護人員帶著高高在上的憐憫姿態說『好可憐喔、真可憐』，不僅剝奪長輩尊嚴，更使長輩感受到無力感與被貶低。",
+        discussionQuestions: [
+          "同情（Sympathy）與同理（Empathy）在照護心態上有何根本不同？",
+          "過度同情的言語與神態，如何影響長輩的自主意識與自尊心？",
+          "如何以『成年對成年』的平等尊嚴視角與長輩溝通？"
+        ],
+        facilitatorTips: "失智長者是經歷數十年風霜的長輩，不是無知幼童。維護尊嚴、賦能參與，避免幼體化與憐憫語氣。"
+      },
+      {
+        id: "comm-11",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 11",
+        title: "溝通題目11：飲食價值觀（吃不吃＝對錯）",
+        expectedFile: "溝通題目11：飲食價值觀（吃不吃＝對錯）.mp4",
+        caseBackground: "照護者將用餐視為硬性任務，以『乖乖吃才是好寶寶、不吃就不聽話』等二元道德評判，強迫進食造成長輩反彈拒食。",
+        discussionQuestions: [
+          "飲食對長輩而言除了熱量攝取，還蘊含哪些文化與自主意義？",
+          "評估拒食原因：口腔疼痛、吞嚥困難、假牙不合還是假飽幻覺？",
+          "如何透過營造溫馨進餐氛圍與自主挑選，提升長輩進食動機？"
+        ],
+        facilitatorTips: "進食是自主權的展現。探究不吃的生理或心理原因，依專業營養與吞嚥評估調整，切勿道德綁架。"
+      },
+      {
+        id: "comm-12",
+        module: "comm",
+        categoryText: "溝通模組",
+        tag: "溝通題目 12",
+        title: "溝通題目12：情緒表達價值觀（哭＝不應該）",
+        expectedFile: "溝通題目12：情緒表達價值觀（哭＝不應該）.mp4",
+        caseBackground: "長輩落淚或感傷時，照護人員急於壓抑其悲傷，強加『要看開點、不要哭』的正向毒性觀念，切斷了情緒宣洩通道。",
+        discussionQuestions: [
+          "為什麼允許長輩在安全環境下『好好哭一場』是心理療癒的一部分？",
+          "工作人員害怕長輩哭泣，是否反映出自身的焦慮與無助感？",
+          "在長輩哀傷時，什麼樣的非語言溝通（如默默遞面紙、輕拍肩膀）最有效？"
+        ],
+        facilitatorTips: "接納負面情緒的存在。哀傷是長輩失去健康與角色的正常歷程，陪伴就是最好的處方。"
+      },
+
+      // 照顧模組 1~12
+      {
+        id: "care-01",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 1",
+        title: "照顧題目1：妄想被偷＋不信任升高",
+        expectedFile: "照顧題目1：妄想被偷＋不信任升高.mp4",
+        caseBackground: "長輩忘記自己將私人物品放在何處，因心理防衛機制轉化為被害或被竊妄想，堅稱『就是隔壁床偷了我的錢/手錶』。",
+        discussionQuestions: [
+          "當長輩指控他人偷竊時，為何自清『沒人會拿你的東西』只會使懷疑加劇？",
+          "陪同尋找（『我們一起找找看它躲在哪裡』）的技巧與時機掌握？",
+          "如何防患於未然：備份常用物品、設置防忘保管抽屜等實務對策？"
+        ],
+        facilitatorTips: "不辯駁、不指責、重引導。長輩需要的是失物重獲的安全感，透過『一起幫忙找』化解敵意。"
+      },
+      {
+        id: "care-02",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 2",
+        title: "照顧題目2：拒絕洗澡＋控制感喪失",
+        expectedFile: "照顧題目2：拒絕洗澡＋控制感喪失.mp4",
+        caseBackground: "洗澡涉及赤身裸體、水流衝擊與溫差，長輩感到隱私被侵犯、失控與寒冷恐懼，因而出現激烈肢體反抗或抓咬。",
+        discussionQuestions: [
+          "分析長輩害怕洗澡的感官恐懼（水溫、光線反光、水流聲、蓮蓬頭）？",
+          "如何維護長輩身體隱私：毛巾遮蔽法與由下而上的擦澡洗法？",
+          "若當日情緒極度抗拒，如何彈性替代（擦澡、泡腳、改時段）符合機構 SOP？"
+        ],
+        facilitatorTips: "洗澡是一天中最容易發生肢體衝突的照護情境。以尊重自主為第一考量，善用預熱浴室與溫柔遮蔽。"
+      },
+      {
+        id: "care-03",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 3",
+        title: "照顧題目3：如廁照顧錯誤",
+        expectedFile: "照顧題目3：如廁照顧錯誤.mp4",
+        caseBackground: "工作人員催促長輩排泄，或在長輩發生失禁時露出厭惡表情與責備言語，重創長輩自尊，引發後續藏排泄物行為。",
+        discussionQuestions: [
+          "失禁對具尊嚴意識的長者而言，心理創傷程度有多深？",
+          "觀察長輩非語言的如廁信號（抓褲子、焦躁踱步、眼神張望）？",
+          "如廁環境友善改善：高對比馬桶蓋、夜間動線夜燈與明確標示。"
+        ],
+        facilitatorTips: "定時主動如廁排程勝於事後清理。失禁發生時，保持平常心，以最快速度維護乾爽與尊嚴。"
+      },
+      {
+        id: "care-04",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 4",
+        title: "照顧題目4：用餐照顧錯誤",
+        expectedFile: "照顧題目4：用餐照顧錯誤.mp4",
+        caseBackground: "一口接一口快速灌食、未確認長輩完成吞嚥即餵下一匙、或忽略頭部姿勢擺位，大幅升高吸入性肺炎窒息風險。",
+        discussionQuestions: [
+          "灌食速度過快在臨床上容易導致哪些不可逆的醫療緊急事故？",
+          "安全的餵食擺位原則（90度坐姿、微收下巴、確認咽喉清空）？",
+          "如何營造專注用餐氛圍，避免電視干擾導致分心嗆咳？"
+        ],
+        facilitatorTips: "長照安全核心界線。給予充分吞嚥時間，隨時觀察喉頭起伏，餐後維持坐姿至少 30 分鐘。"
+      },
+      {
+        id: "care-05",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 5",
+        title: "照顧題目5：聽不懂指令＋功能退化",
+        expectedFile: "照顧題目5：聽不懂指令＋功能退化.mp4",
+        caseBackground: "工作人員一次給出長串複雜複合指令（『先把外套脫掉去洗手然後拿杯子喝水』），長輩無法吸收只能呆立，被誤解為抗命。",
+        discussionQuestions: [
+          "認知功能退化者的資訊處理容量極限為何？",
+          "如何練習『一次只說一個動詞指令』與『搭配手勢示範』？",
+          "面部朝向、水平視線接觸在指令傳遞中的決定性作用？"
+        ],
+        facilitatorTips: "單一清晰指令。運用視覺提示與示範動作，每一步驟完成後給予具體肯定，再進行下一步。"
+      },
+      {
+        id: "care-06",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 6",
+        title: "照顧題目6：忽略社交需求",
+        expectedFile: "照顧題目6：忽略社交需求.mp4",
+        caseBackground: "機構將長輩照顧簡化為吃飽穿暖，長輩終日面壁枯坐、缺乏人際互動與眼神交流，加速腦部退化與抑鬱發生。",
+        discussionQuestions: [
+          "感官與社交剝奪對失智症惡化速度的臨床影響？",
+          "在緊湊的機構作息中，如何融入『微社交』（30秒眼神交流、問好、握手）？",
+          "如何促進長輩間的小團體自然互動，而非僅由工作人員主導？"
+        ],
+        facilitatorTips: "社會心理照護同等重要。有溫度的眼神接觸與短暫交談，是減緩認知退化的天然良藥。"
+      },
+      {
+        id: "care-07",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 7",
+        title: "照顧題目7：忽略生活習慣",
+        expectedFile: "照顧題目7：忽略生活習慣.mp4",
+        caseBackground: "強迫原本習慣晚起泡茶的長輩一律清晨六點起床吃稀飯，破壞其數十年的生活節律，引發劇烈抗拒與躁動。",
+        discussionQuestions: [
+          "機構標準化流程 vs 個別化生活史照顧的平衡取捨？",
+          "如何透過生活史調查表（Life History）挖掘長輩關鍵生活習慣？",
+          "保留一項長輩的生活小習慣，能為長輩帶來多大的心理安定力？"
+        ],
+        facilitatorTips: "以人為本照護（Person-Centered Care）。適度讓機構流程配合長輩生活史，而非消滅長輩的獨特性。"
+      },
+      {
+        id: "care-08",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 8",
+        title: "照顧題目8：不願意吃藥（抗拒用藥）",
+        expectedFile: "照顧題目8：不願意吃藥（抗拒用藥）.mp4",
+        caseBackground: "長輩因藥物苦味、吞嚥困難或疑心有毒而緊閉雙唇吐藥。工作人員捏鼻硬灌引發嗆咳危險。",
+        discussionQuestions: [
+          "長輩抗拒吃藥背後的真實原因分析（苦味、顆粒過大、被害妄想）？",
+          "涉及藥物安全與磨粉變更劑型時，機構合法通報與藥師評估流程？",
+          "有哪些合乎護理專業倫理的輔助服藥溝通與放鬆技巧？"
+        ],
+        facilitatorTips: "絕不可暴力強灌。先排查吞嚥困難或藥物副作用，通報護理師與醫師評估劑型調整，切守專業邊界。"
+      },
+      {
+        id: "care-09",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 9",
+        title: "照顧題目9：錯誤糾正 vs 溝通關係",
+        expectedFile: "照顧題目9：錯誤糾正 vs 溝通關係.mp4",
+        caseBackground: "長輩指著香蕉說是蘋果，照護者立即當眾打臉糾正，甚至招來其他同仁圍觀，造成長輩羞愧、防禦並封閉心門。",
+        discussionQuestions: [
+          "在失智照護中，『事實正確』與『關係安全』何者更優先？",
+          "當長輩說出錯誤認知但無安全危害時，最佳的回應策略是什麼？",
+          "如何做到『不糾正、不附和、同理其背後動機』？"
+        ],
+        facilitatorTips: "贏了道理，輸了關係。失智長輩的現實已改變，陪伴在長輩的現實中，而非強拉回冷酷的事實。"
+      },
+      {
+        id: "care-10",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 10",
+        title: "照顧題目10：物品收納 vs 認知能力",
+        expectedFile: "照顧題目10：物品收納 vs 認知能力.mp4",
+        caseBackground: "房間衣櫥抽屜外觀完全相同且未標示，長輩找不到內衣褲而翻箱倒櫃，被指責為『製造混亂破壞環境』。",
+        discussionQuestions: [
+          "失智症空間與符號視覺辨識障礙對日常自理生活的影響？",
+          "環境線索改造：彩色標籤、透明收納盒、實物照片貼紙的應用？",
+          "如何保留長輩自己整理抽屜的參與感，而非工作人員全部代勞？"
+        ],
+        facilitatorTips: "環境是無聲的照護者。透過視覺化標籤與無障礙動線設計，賦予長輩自主尋物能力，減少挫折。"
+      },
+      {
+        id: "care-11",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 11",
+        title: "照顧題目11：夜間不睡 vs 行為標籤",
+        expectedFile: "照顧題目11：夜間不睡 vs 行為標籤.mp4",
+        caseBackground: "長輩日夜顛倒夜間遊走，夜班人員立即給予安眠鎮靜藥或捆綁約束，忽視白天缺乏日照運動與頻尿等根本原因。",
+        discussionQuestions: [
+          "夜間遊走的背後潛在需求：找廁所、口渴、肚子餓、關節痛還是恐懼？",
+          "非藥物日間作息調整法：戶外日光照射、認知刺激與規律運動？",
+          "機構夜間安全巡視與巡房低干擾照明改善方案？"
+        ],
+        facilitatorTips: "非藥物處置優先。白天消耗適當體力並充足光照，夜間排除生理不適與環境恐懼，慎用拘束與鎮靜。"
+      },
+      {
+        id: "care-12",
+        module: "care",
+        categoryText: "照顧模組",
+        tag: "照顧題目 12",
+        title: "照顧題目12：重複行為 vs 行為干預",
+        expectedFile: "照顧題目12：重複行為 vs 行為干預.mp4",
+        caseBackground: "長輩反覆摺疊同一條毛巾或搬動椅子，工作人員強行奪下物品並嚴厲喝止，引發長輩驚恐與攻擊性防禦。",
+        discussionQuestions: [
+          "重複刻板行為（Stereotypy）對長輩內在焦慮有何安撫代償作用？",
+          "判斷標準：該重複行為是否真正具有危險性？若無危險為何必須制止？",
+          "如何將重複動作引導至安全且具成就感的事物（如折乾淨毛巾、分豆子）？"
+        ],
+        facilitatorTips: "無害則允許，善用其專注。重複動作通常是長輩自我平撫的方式，轉化為有意義的活動比強行奪下更具智慧。"
+      }
+    ];
+
+    // 全域狀態機
+    const State = {
+      groups: [], // { id: 1, name: '第 1 組', drawnTopicIds: [] }
+      currentGroupIndex: 0,
+      filterMode: 'all', // 'all', 'comm', 'care'
+      drawnTopicIds: new Set(),
+      matchedMediaMap: new Map(), // topicId -> { fileHandle/fileObj, blobUrl, fileName }
+      isRolling: false,
+      quickMode: false,
+      soundEnabled: true,
+      currentTopic: null,
+      timerSeconds: 180,
+      timerInterval: null,
+      timerRunning: false
+    };
+
+    // 音效合成引擎 (Web Audio API)
+    const AudioEngine = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      },
+      playTick() {
+        if (!State.soundEnabled) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.05);
+          gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.05);
+        } catch(e) {}
+      },
+      playWin() {
+        if (!State.soundEnabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            gain.gain.setValueAtTime(0.15, now + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.3);
+          });
+        } catch(e) {}
+      }
+    };
+
+    // 初始化小組
+    function initGroups(count = 6) {
+      State.groups = [];
+      for (let i = 1; i <= count; i++) {
+        State.groups.push({
+          id: i,
+          name: `第 ${i} 組`,
+          drawnTopicIds: []
+        });
+      }
+      State.currentGroupIndex = 0;
+      renderGroups();
+      updateStageBanner();
+    }
+
+    // 渲染小組列表
+    function renderGroups() {
+      const container = document.getElementById('groupGrid');
+      container.innerHTML = '';
+      State.groups.forEach((grp, idx) => {
+        const card = document.createElement('div');
+        card.className = `group-card ${idx === State.currentGroupIndex ? 'active' : ''}`;
+        card.onclick = () => selectGroup(idx);
+
+        let topicsHtml = grp.drawnTopicIds.map(tid => {
+          const top = TOPIC_MANIFEST.find(t => t.id === tid);
+          return top ? `<div class="drawn-topic-pill ${top.module}">${top.tag}</div>` : '';
+        }).join('');
+
+        if (!topicsHtml) {
+          topicsHtml = '<div style="font-size:11px; color:#64748b; margin-top:4px;">尚未抽題</div>';
+        }
+
+        card.innerHTML = `
+          <div class="group-card-header">
+            <span>${grp.name}</span>
+            <span class="group-drawn-count">${grp.drawnTopicIds.length} 題</span>
+          </div>
+          <div class="group-topics-list">
+            ${topicsHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('statTotalGroups').textContent = State.groups.length;
+    }
+
+    // 切換指定組別
+    function selectGroup(idx) {
+      State.currentGroupIndex = idx;
+      renderGroups();
+      updateStageBanner();
+    }
+
+    // 更新中央橫幅
+    function updateStageBanner() {
+      const curGroup = State.groups[State.currentGroupIndex];
+      if (curGroup) {
+        document.getElementById('currentGroupTag').textContent = curGroup.name;
+        document.getElementById('currentActionNotice').textContent = 
+          `請 ${curGroup.name} 派代表就位，抽取失智症教學情境影片題目`;
+      }
+    }
+
+    // 渲染題庫狀態矩陣
+    function renderMatrix() {
+      const grid = document.getElementById('matrixGrid');
+      grid.innerHTML = '';
+
+      let availableCount = 0;
+      let commCount = 0;
+      let careCount = 0;
+
+      TOPIC_MANIFEST.forEach(topic => {
+        const isDrawn = State.drawnTopicIds.has(topic.id);
+        if (!isDrawn) availableCount++;
+        if (topic.module === 'comm' && isDrawn) commCount++;
+        if (topic.module === 'care' && isDrawn) careCount++;
+
+        const card = document.createElement('div');
+        card.className = `matrix-card ${isDrawn ? 'drawn' : ''}`;
+        card.style.borderLeft = `4px solid ${topic.module === 'comm' ? 'var(--comm-color)' : 'var(--care-color)'}`;
+
+        card.innerHTML = `
+          <div class="matrix-card-header">
+            <span style="color:${topic.module === 'comm' ? 'var(--comm-color)' : 'var(--care-color)'}; font-weight:800;">${topic.tag}</span>
+            <span style="font-size:11px; color:var(--text-muted);">
+              ${topic.module === 'comm' ? '溝通情境' : '照護技巧'}
+            </span>
+          </div>
+          <div class="matrix-card-title">${topic.title}</div>
+          <div style="font-size:11px; color:#38bdf8; background:rgba(56,189,248,0.1); padding:3px 6px; border-radius:4px; margin-top:2px; word-break:break-all;">
+            📄 檔名：${topic.expectedFile}
+          </div>
+          <div class="matrix-card-meta" style="margin-top:8px;">
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="previewTopic('${topic.id}')">📖 檢視教案</button>
+            <button class="btn btn-primary" style="padding:4px 10px; font-size:11px;" onclick="directSelectTopic('${topic.id}')">🎯 自由選此題</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      document.getElementById('matrixAvailableCount').textContent = availableCount;
+      document.getElementById('statDrawnCount').textContent = State.drawnTopicIds.size;
+      document.getElementById('statCommCount').textContent = commCount;
+      document.getElementById('statCareCount').textContent = careCount;
+    }
+
+    // 自由指定選取任一題目
+    window.directSelectTopic = function(topicId) {
+      const topic = TOPIC_MANIFEST.find(t => t.id === topicId);
+      if (!topic) return;
+
+      const curGroup = State.groups[State.currentGroupIndex];
+      if (!curGroup) {
+        alert('請先選擇要指派的小組！');
+        return;
+      }
+
+      if (State.drawnTopicIds.has(topic.id)) {
+        if (!confirm(`【${topic.tag}】先前已經被抽取或指派過，確定要再次指派給【${curGroup.name}】嗎？`)) {
+          return;
+        }
+      }
+
+      onDrawSuccess(topic);
+    };
+
+    // 取得當前可抽的題目清單（依篩選器與防重複規則）
+    function getAvailablePool() {
+      return TOPIC_MANIFEST.filter(t => {
+        if (State.drawnTopicIds.has(t.id)) return false;
+        if (State.filterMode === 'comm') return t.module === 'comm';
+        if (State.filterMode === 'care') return t.module === 'care';
+        return true;
+      });
+    }
+
+    // 抽籤邏輯
+    function startDraw() {
+      if (State.isRolling) return;
+      const pool = getAvailablePool();
+
+      if (pool.length === 0) {
+        alert('當前篩選題庫已全部抽取完畢！請更換模組篩選或重置課堂。');
+        return;
+      }
+
+      const curGroup = State.groups[State.currentGroupIndex];
+      if (!curGroup) {
+        alert('請先選擇當前抽籤小組！');
+        return;
+      }
+
+      State.isRolling = true;
+      const btn = document.getElementById('btnStartDraw');
+      btn.disabled = true;
+
+      // 真正隨機選中目標題（密碼學安全隨機數）
+      const randomBuffer = new Uint32Array(1);
+      window.crypto.getRandomValues(randomBuffer);
+      const chosenTopic = pool[randomBuffer[0] % pool.length];
+
+      if (State.quickMode) {
+        // 快速模式直接開獎
+        AudioEngine.playWin();
+        onDrawSuccess(chosenTopic);
+        return;
+      }
+
+      // 動態滾輪輪播動畫 (2.5 秒)
+      const track = document.getElementById('rouletteTrack');
+      let steps = 24;
+      let currentStep = 0;
+      const intervalTime = 80;
+
+      const timer = setInterval(() => {
+        currentStep++;
+        const tempItem = pool[Math.floor(Math.random() * pool.length)];
+        track.innerHTML = `
+          <div class="roulette-item">
+            <span class="roulette-item-category" style="background: rgba(2, 132, 199, 0.2); color: var(--primary-light);">${tempItem.categoryText}</span>
+            <span class="roulette-item-title">${tempItem.title}</span>
+          </div>
+        `;
+        AudioEngine.playTick();
+
+        if (currentStep >= steps) {
+          clearInterval(timer);
+          // 鎖定最終目標
+          track.innerHTML = `
+            <div class="roulette-item" style="animation: modalPop 0.2s;">
+              <span class="roulette-item-category" style="background: var(--accent); color: #000; font-weight:800;">★ 恭喜抽中 ★</span>
+              <span class="roulette-item-title" style="color:var(--accent-light);">${chosenTopic.title}</span>
+            </div>
+          `;
+          AudioEngine.playWin();
+          setTimeout(() => {
+            onDrawSuccess(chosenTopic);
+          }, 600);
+        }
+      }, intervalTime);
+    }
+
+    // 抽籤中獎後的後續流程
+    function onDrawSuccess(topic) {
+      State.isRolling = false;
+      document.getElementById('btnStartDraw').disabled = false;
+
+      // 紀錄抽取
+      const curGroup = State.groups[State.currentGroupIndex];
+      curGroup.drawnTopicIds.push(topic.id);
+      State.drawnTopicIds.add(topic.id);
+
+      renderGroups();
+      renderMatrix();
+      saveProgressToLocal();
+
+      // 開啟研討與播放彈窗
+      openFacilitationModal(topic, curGroup.name);
+    }
+
+    // 打開研討與播放控制台 (Modal)
+    function openFacilitationModal(topic, groupName) {
+      State.currentTopic = topic;
+
+      document.getElementById('modalTopicBadge').textContent = topic.tag;
+      document.getElementById('modalTopicTitle').textContent = topic.title;
+      document.getElementById('modalExpectedFile').textContent = topic.expectedFile;
+      document.getElementById('modalAssignedGroupTag').textContent = `指派小組：${groupName}`;
+      document.getElementById('codeFileNameDisplay').textContent = topic.expectedFile;
+
+      document.getElementById('modalCaseBackground').textContent = topic.caseBackground;
+      document.getElementById('modalFacilitatorTips').textContent = topic.facilitatorTips;
+
+      const qBox = document.getElementById('modalDiscussionQuestions');
+      qBox.innerHTML = topic.discussionQuestions.map(q => `<li>${q}</li>`).join('');
+
+      // 檢查影片是否已載入 (支援 Blob URL 與同目錄相對路徑直接播放)
+      const videoEl = document.getElementById('mainVideoPlayer');
+      const fallbackBox = document.getElementById('videoFallbackBox');
+
+      const mediaEntry = State.matchedMediaMap.get(topic.id);
+      let videoSourceUrl = null;
+      if (mediaEntry && mediaEntry.blobUrl) {
+        videoSourceUrl = mediaEntry.blobUrl;
+      } else {
+        // 嘗試同目錄檔案
+        videoSourceUrl = encodeURI(topic.expectedFile);
+      }
+
+      videoEl.style.display = 'block';
+      fallbackBox.style.display = 'none';
+      videoEl.src = videoSourceUrl;
+      videoEl.load();
+
+      // 監聽載入事件：若本機非同目錄失敗，優雅顯示自由選取按鈕
+      videoEl.onerror = () => {
+        videoEl.style.display = 'none';
+        fallbackBox.style.display = 'flex';
+        document.getElementById('fallbackFilePrompt').textContent = `對應影片檔案名稱：`;
+      };
+
+      videoEl.onloadedmetadata = () => {
+        videoEl.style.display = 'block';
+        fallbackBox.style.display = 'none';
+      };
+
+      // 重設計時器
+      resetTimer();
+
+      document.getElementById('topicModal').classList.add('active');
+    }
+
+    // 預覽任一題目教案
+    window.previewTopic = function(topicId) {
+      const top = TOPIC_MANIFEST.find(t => t.id === topicId);
+      if (top) {
+        openFacilitationModal(top, '教案快速預覽');
+      }
+    };
+
+    // 關閉 Modal
+    function closeModal() {
+      const videoEl = document.getElementById('mainVideoPlayer');
+      videoEl.pause();
+      document.getElementById('topicModal').classList.remove('active');
+      stopTimer();
+    }
+
+    // 確認本題完畢並切換到下一組
+    function confirmAndNextGroup() {
+      closeModal();
+      // 自動輪換至下一組
+      State.currentGroupIndex = (State.currentGroupIndex + 1) % State.groups.length;
+      renderGroups();
+      updateStageBanner();
+    }
+
+    // 復原放回並重抽
+    function undoAndReDraw() {
+      if (!State.currentTopic) return;
+      if (confirm(`確定要將【${State.currentTopic.tag}】放回題庫並重新抽題嗎？`)) {
+        const curGroup = State.groups[State.currentGroupIndex];
+        curGroup.drawnTopicIds = curGroup.drawnTopicIds.filter(id => id !== State.currentTopic.id);
+        State.drawnTopicIds.delete(State.currentTopic.id);
+
+        closeModal();
+        renderGroups();
+        renderMatrix();
+        saveProgressToLocal();
+        setTimeout(() => {
+          startDraw();
+        }, 300);
+      }
+    }
+
+    // 倒數計時器模組 (使用 Date.now 避免分頁漂移)
+    let timerTargetTime = 0;
+    function startTimer() {
+      if (State.timerRunning) {
+        stopTimer();
+        return;
+      }
+      State.timerRunning = true;
+      document.getElementById('btnTimerToggle').textContent = '暫停計時';
+      document.getElementById('btnTimerToggle').className = 'btn btn-outline';
+
+      timerTargetTime = Date.now() + State.timerSeconds * 1000;
+
+      State.timerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((timerTargetTime - Date.now()) / 1000));
+        State.timerSeconds = remaining;
+        updateTimerDisplay();
+
+        if (remaining <= 0) {
+          stopTimer();
+          AudioEngine.playWin();
+          alert('⏰ 小組研討時間到！請講師引導分享講評。');
+        }
+      }, 200);
+    }
+
+    function stopTimer() {
+      State.timerRunning = false;
+      clearInterval(State.timerInterval);
+      document.getElementById('btnTimerToggle').textContent = '繼續計時';
+      document.getElementById('btnTimerToggle').className = 'btn btn-accent';
+    }
+
+    function resetTimer() {
+      stopTimer();
+      const defaultSec = parseInt(document.getElementById('settingDefaultTimer').value) || 180;
+      State.timerSeconds = defaultSec;
+      updateTimerDisplay();
+      document.getElementById('btnTimerToggle').textContent = '開始計時';
+    }
+
+    function addTimer1Min() {
+      State.timerSeconds += 60;
+      timerTargetTime += 60000;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(State.timerSeconds / 60);
+      const secs = State.timerSeconds % 60;
+      document.getElementById('timerText').textContent = 
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    // 檔案載入與嚴格比對機制 (Pre-flight Engine)
+    function handleFolderFiles(fileList) {
+      let matchedCount = 0;
+
+      TOPIC_MANIFEST.forEach(topic => {
+        // 嚴格比對檔名 (忽略開頭路徑與斜線)
+        const targetName = topic.expectedFile.toLowerCase().trim();
+
+        // 搜尋匹配的檔案
+        for (let i = 0; i < fileList.length; i++) {
+          const file = fileList[i];
+          const fileName = file.name.toLowerCase().trim();
+
+          // 嚴格匹配或去標點比對
+          if (fileName === targetName || normalizeFileName(fileName) === normalizeFileName(targetName)) {
+            const blobUrl = URL.createObjectURL(file);
+            State.matchedMediaMap.set(topic.id, {
+              file: file,
+              blobUrl: blobUrl,
+              fileName: file.name
+            });
+            matchedCount++;
+            break;
+          }
+        }
+      });
+
+      updatePreflightStatus(matchedCount);
+      renderManifestTable();
+      renderMatrix();
+    }
+
+    // 去除特殊符號輔助比對
+    function normalizeFileName(str) {
+      return str.replace(/[:：+＋_—\-\s]/g, '').replace('.mp4', '');
+    }
+
+    // 更新檢核指示燈
+    function updatePreflightStatus(matchedCount) {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      const chkMatched = document.getElementById('chkCountMatched');
+      const chkMissing = document.getElementById('chkCountMissing');
+
+      chkMatched.textContent = matchedCount;
+      chkMissing.textContent = 24 - matchedCount;
+
+      if (matchedCount === 24) {
+        dot.className = 'dot connected';
+        text.textContent = '24 部影片全數配對完成 (完美備妥)';
+      } else if (matchedCount > 0) {
+        dot.className = 'dot partial';
+        text.textContent = `已配對 ${matchedCount}/24 部 (部分缺檔備援)`;
+      } else {
+        dot.className = 'dot none';
+        text.textContent = '影片未配對（點此載入資料夾）';
+      }
+    }
+
+    // 渲染課前檢核清單表
+    function renderManifestTable() {
+      const tbody = document.getElementById('manifestTableBody');
+      tbody.innerHTML = '';
+
+      TOPIC_MANIFEST.forEach(t => {
+        const tr = document.createElement('tr');
+        const isMatched = State.matchedMediaMap.has(t.id);
+
+        tr.innerHTML = `
+          <td style="font-weight:700;">${t.tag}</td>
+          <td style="word-break: break-all;">${t.expectedFile}</td>
+          <td>
+            <span style="color:${isMatched ? 'var(--success)' : 'var(--danger)'}; font-weight:700;">
+              ${isMatched ? '✓ 已就緒' : '✕ 未配對'}
+            </span>
+          </td>
+          <td>
+            ${isMatched ? `<button class="btn btn-outline" style="padding:2px 6px; font-size:10px;" onclick="testPlayMedia('${t.id}')">測試播放</button>` : `<button class="btn btn-outline" style="padding:2px 6px; font-size:10px;" onclick="bindSingleFile('${t.id}')">單檔綁定</button>`}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 單檔綁定
+    let pendingBindTopicId = null;
+    window.bindSingleFile = function(topicId) {
+      pendingBindTopicId = topicId;
+      document.getElementById('singleFileInput').click();
+    };
+
+    window.testPlayMedia = function(topicId) {
+      previewTopic(topicId);
+    };
+
+    // 本地持久化保存
+    function saveProgressToLocal() {
+      try {
+        const data = {
+          groups: State.groups,
+          currentGroupIndex: State.currentGroupIndex,
+          drawnTopicIds: Array.from(State.drawnTopicIds),
+          timestamp: Date.now()
+        };
+        localStorage.setItem('dementia_draw_session', JSON.stringify(data));
+      } catch(e) {}
+    }
+
+    // 載入本地保存
+    function loadProgressFromLocal() {
+      try {
+        const raw = localStorage.getItem('dementia_draw_session');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && Array.isArray(data.groups)) {
+            State.groups = data.groups;
+            State.currentGroupIndex = data.currentGroupIndex || 0;
+            State.drawnTopicIds = new Set(data.drawnTopicIds || []);
+            renderGroups();
+            renderMatrix();
+            updateStageBanner();
+          }
+        }
+      } catch(e) {}
+    }
+
+    // 匯出 CSV 紀錄表
+    function exportRecordsCSV() {
+      let csv = "\uFEFF組別,題目代號,題目完整名稱,模組分類,抽取狀態\n";
+      State.groups.forEach(g => {
+        if (g.drawnTopicIds.length === 0) {
+          csv += `"${g.name}","","(尚未抽題)","",""\n`;
+        } else {
+          g.drawnTopicIds.forEach(tid => {
+            const t = TOPIC_MANIFEST.find(item => item.id === tid);
+            if (t) {
+              csv += `"${g.name}","${t.tag}","${t.title}","${t.categoryText}","已完成研討"\n`;
+            }
+          });
+        }
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `失智症課堂抽題研討紀錄_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // 事件監聽綁定
+    document.addEventListener('DOMContentLoaded', () => {
+      initGroups(6);
+      renderMatrix();
+      renderManifestTable();
+      loadProgressFromLocal();
+
+      // 自動探測同目錄影片檔案（若在同一資料夾開啟，自動免手動配對）
+      const probeVideo = document.createElement('video');
+      probeVideo.preload = 'metadata';
+      probeVideo.src = encodeURI(TOPIC_MANIFEST[0].expectedFile);
+      probeVideo.onloadedmetadata = () => {
+        TOPIC_MANIFEST.forEach(t => {
+          if (!State.matchedMediaMap.has(t.id)) {
+            State.matchedMediaMap.set(t.id, {
+              blobUrl: encodeURI(t.expectedFile),
+              fileName: t.expectedFile
+            });
+          }
+        });
+        updatePreflightStatus(24);
+        renderManifestTable();
+        renderMatrix();
+        const text = document.getElementById('statusText');
+        if (text) text.textContent = '同目錄 24 部影片已自動連線 (完美就緒)';
+      };
+
+      // 開始抽籤按鈕
+      document.getElementById('btnStartDraw').addEventListener('click', startDraw);
+
+      // 快速模式切換
+      document.getElementById('chkQuickMode').addEventListener('change', (e) => {
+        State.quickMode = e.target.checked;
+      });
+
+      // 題庫分類切換按鈕
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          State.filterMode = btn.dataset.filter;
+        });
+      });
+
+      // 課前檢核抽屜控制
+      const checkDrawer = document.getElementById('checkDrawer');
+      document.getElementById('btnOpenCheckDrawer').onclick = () => checkDrawer.classList.add('active');
+      document.getElementById('btnCloseCheckDrawer').onclick = () => checkDrawer.classList.remove('active');
+
+      // 設定抽屜控制
+      const settingsDrawer = document.getElementById('settingsDrawer');
+      document.getElementById('btnOpenSettingsDrawer').onclick = () => settingsDrawer.classList.add('active');
+      document.getElementById('btnCloseSettingsDrawer').onclick = () => settingsDrawer.classList.remove('active');
+
+      // 選擇資料夾按鈕
+      document.getElementById('btnSelectFolder').onclick = () => {
+        document.getElementById('folderInput').click();
+      };
+
+      document.getElementById('folderInput').addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          handleFolderFiles(e.target.files);
+        }
+      });
+
+      // 單檔綁定
+      document.getElementById('singleFileInput').addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0 && pendingBindTopicId) {
+          const file = e.target.files[0];
+          const blobUrl = URL.createObjectURL(file);
+          State.matchedMediaMap.set(pendingBindTopicId, {
+            file: file,
+            blobUrl: blobUrl,
+            fileName: file.name
+          });
+          renderManifestTable();
+          renderMatrix();
+          if (State.currentTopic && State.currentTopic.id === pendingBindTopicId) {
+            openFacilitationModal(State.currentTopic, State.groups[State.currentGroupIndex].name);
+          }
+          pendingBindTopicId = null;
+        }
+      });
+
+      document.getElementById('btnSelectSingleVideo').onclick = () => {
+        if (State.currentTopic) {
+          bindSingleFile(State.currentTopic.id);
+        }
+      };
+
+      // 複製檔案名稱按鈕
+      document.getElementById('btnCopyOnlyFileName').onclick = () => {
+        if (State.currentTopic) {
+          const fname = State.currentTopic.expectedFile;
+          navigator.clipboard.writeText(fname).then(() => {
+            alert('已複製檔案名稱：\n' + fname);
+          }).catch(() => {
+            alert('檔案名稱：' + fname);
+          });
+        }
+      };
+
+      // 支援將檔案直接拖曳進播放區播放
+      const dropZone = document.getElementById('videoDropZone');
+      if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.style.border = '2px dashed var(--accent)';
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          dropZone.style.border = '1px solid var(--card-border)';
+        });
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.style.border = '1px solid var(--card-border)';
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            const blobUrl = URL.createObjectURL(file);
+            if (State.currentTopic) {
+              State.matchedMediaMap.set(State.currentTopic.id, {
+                file: file,
+                blobUrl: blobUrl,
+                fileName: file.name
+              });
+            }
+            const videoEl = document.getElementById('mainVideoPlayer');
+            videoEl.src = blobUrl;
+            videoEl.style.display = 'block';
+            document.getElementById('videoFallbackBox').style.display = 'none';
+            videoEl.play().catch(() => {});
+          }
+        });
+      }
+
+      // Modal 控制按鈕
+      document.getElementById('btnCloseModal').onclick = closeModal;
+      document.getElementById('btnConfirmAndNext').onclick = confirmAndNextGroup;
+      document.getElementById('btnReDrawCurrent').onclick = undoAndReDraw;
+
+      // 計時器控制
+      document.getElementById('btnTimerToggle').onclick = startTimer;
+      document.getElementById('btnTimerReset').onclick = resetTimer;
+      document.getElementById('btnTimerAdd1').onclick = addTimer1Min;
+
+      // 設定更動
+      document.getElementById('settingGroupCount').addEventListener('change', (e) => {
+        if (confirm('更改組數將重置當前組別配置，是否繼續？')) {
+          initGroups(parseInt(e.target.value));
+          saveProgressToLocal();
+        }
+      });
+
+      document.getElementById('settingSoundEnabled').addEventListener('change', (e) => {
+        State.soundEnabled = e.target.checked;
+      });
+
+      // 匯出與重置
+      document.getElementById('btnExportRecord').onclick = exportRecordsCSV;
+      document.getElementById('btnResetClass').onclick = () => {
+        if (confirm('【開新課堂確認】確定要清空本次課堂的所有抽籤紀錄與小組分配嗎？')) {
+          localStorage.removeItem('dementia_draw_session');
+          State.drawnTopicIds.clear();
+          initGroups(parseInt(document.getElementById('settingGroupCount').value) || 6);
+          renderMatrix();
+        }
+      };
+
+      // 快速新增組別
+      document.getElementById('btnQuickAddGroup').onclick = () => {
+        const nextId = State.groups.length + 1;
+        if (nextId > 16) {
+          alert('最多支援 16 組！');
+          return;
+        }
+        State.groups.push({
+          id: nextId,
+          name: `第 ${nextId} 組`,
+          drawnTopicIds: []
+        });
+        renderGroups();
+        saveProgressToLocal();
+      };
+
+      // 全螢幕切換
+      document.getElementById('btnToggleFullscreen').onclick = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      };
+
+      // 鍵盤快捷鍵
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+          checkDrawer.classList.remove('active');
+          settingsDrawer.classList.remove('active');
+        } else if (e.key === 'f' || e.key === 'F') {
+          if (document.activeElement.tagName !== 'INPUT') {
+            document.getElementById('btnToggleFullscreen').click();
+          }
+        } else if (e.key === ' ' || e.code === 'Space') {
+          if (document.getElementById('topicModal').classList.contains('active')) {
+            const videoEl = document.getElementById('mainVideoPlayer');
+            if (videoEl.style.display !== 'none') {
+              e.preventDefault();
+              if (videoEl.paused) videoEl.play(); else videoEl.pause();
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
